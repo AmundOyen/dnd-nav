@@ -71,3 +71,11 @@ npm install
 npm start      # http://localhost:4200
 npm test
 ```
+
+## Deployment
+
+`.github/workflows/pages.yml` runs the tests and builds the app on every pull request. On pushes to
+`main` (or a manual run) it also deploys the demo to GitHub Pages at
+https://amundoyen.github.io/dnd-nav/.
+
+One-time setup: in the repository's **Settings → Pages**, set **Source** to **GitHub Actions**.
