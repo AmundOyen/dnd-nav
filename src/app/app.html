@@ -2,6 +2,7 @@
   class="rail"
   aria-label="Main"
   [(items)]="items"
+  [(expanded)]="navExpanded"
   [activeId]="activeId()"
   (itemSelect)="active.set($event)"
 />
@@ -25,6 +26,7 @@
       <li>A group left with one item is ungrouped automatically.</li>
       <li>Double-click a group, or press F2 on it, to rename it. Press Escape to cancel a drag.</li>
       <li>On touch devices, press and hold an item to start dragging.</li>
+      <li>Use the menu button at the top of the navigator to expand or minimize it.</li>
     </ul>
   </section>
 

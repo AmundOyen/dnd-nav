@@ -1,14 +1,22 @@
 :host {
   --dnd-nav-width: 88px;
+  --dnd-nav-drawer-width: 240px;
   --dnd-nav-indicator: var(--mat-sys-primary);
 
-  display: block;
+  display: flex;
+  flex-direction: column;
   width: var(--dnd-nav-width);
   box-sizing: border-box;
+  overflow-x: hidden;
   overflow-y: auto;
   overscroll-behavior: contain;
   -webkit-user-select: none;
   user-select: none;
+  transition: width 200ms cubic-bezier(0.2, 0, 0, 1);
+}
+
+:host(.drawer) {
+  width: var(--dnd-nav-drawer-width);
 }
 
 :host(.is-dragging) {
@@ -17,6 +25,22 @@
   .tile {
     cursor: grabbing;
   }
+}
+
+.nav-header {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  flex: none;
+  display: flex;
+  justify-content: center;
+  padding: 8px 4px 0;
+  background: inherit;
+}
+
+:host(.drawer) .nav-header {
+  justify-content: flex-start;
+  padding-inline: 16px;
 }
 
 ul {
@@ -28,7 +52,8 @@ ul {
 .nav-list {
   display: flex;
   flex-direction: column;
-  min-height: 100%;
+  // Fills the rest of the rail so empty space below the items is a drop zone.
+  flex: 1 0 auto;
   padding: 8px 4px 32px;
   box-sizing: border-box;
   position: relative;
@@ -185,6 +210,51 @@ ul {
   padding: 0 4px;
 }
 
+.chevron {
+  display: none;
+}
+
+// Drawer: icon beside label, like a Material navigation drawer.
+:host(.drawer) {
+  .nav-list {
+    padding-inline: 12px;
+  }
+
+  .tile {
+    flex-direction: row;
+    gap: 12px;
+    min-height: 48px;
+    padding: 12px 16px;
+    border-radius: 24px;
+    font: var(--mat-sys-label-large);
+    text-align: start;
+  }
+
+  .tile-label {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .nav-group.expanded {
+    border-radius: 24px;
+  }
+
+  .group-children {
+    padding-inline: 16px 0;
+  }
+
+  .chevron {
+    display: block;
+    flex: none;
+  }
+
+  .rename-input {
+    flex: 1;
+    min-width: 0;
+    text-align: start;
+  }
+}
+
 .rename-input {
   width: 100%;
   box-sizing: border-box;
@@ -222,6 +292,7 @@ ul {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  :host,
   .tile,
   .nav-group {
     transition: none;

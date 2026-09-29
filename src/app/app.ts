@@ -6,6 +6,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { DndNavigator, NavItem, NavNode } from './dnd-navigator';
 
 const STORAGE_KEY = 'dnd-nav.items';
+const EXPANDED_KEY = 'dnd-nav.expanded';
 
 const DEFAULT_ITEMS: readonly NavNode[] = [
   { kind: 'item', id: 'home', label: 'Home', icon: 'home' },
@@ -27,9 +28,26 @@ const DEFAULT_ITEMS: readonly NavNode[] = [
   { kind: 'item', id: 'settings', label: 'Settings', icon: 'settings' },
 ];
 
+// Storage can be unavailable (private mode, quota); the demo still works without it.
+function readStorage(key: string): string | null {
+  try {
+    return localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+function writeStorage(key: string, value: string): void {
+  try {
+    localStorage.setItem(key, value);
+  } catch {
+    // Ignore: see readStorage.
+  }
+}
+
 function loadItems(): readonly NavNode[] {
   try {
-    const stored = localStorage.getItem(STORAGE_KEY);
+    const stored = readStorage(STORAGE_KEY);
     return stored ? (JSON.parse(stored) as NavNode[]) : DEFAULT_ITEMS;
   } catch {
     return DEFAULT_ITEMS;
@@ -44,17 +62,13 @@ function loadItems(): readonly NavNode[] {
 })
 export class App {
   protected readonly items = signal(loadItems());
+  protected readonly navExpanded = signal(readStorage(EXPANDED_KEY) === 'true');
   protected readonly active = signal<NavItem | null>(null);
   protected readonly activeId = computed(() => this.active()?.id ?? null);
 
   constructor() {
-    effect(() => {
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(this.items()));
-      } catch {
-        // Storage can be unavailable (private mode, quota); the demo still works without it.
-      }
-    });
+    effect(() => writeStorage(STORAGE_KEY, JSON.stringify(this.items())));
+    effect(() => writeStorage(EXPANDED_KEY, String(this.navExpanded())));
   }
 
   protected reset(): void {
