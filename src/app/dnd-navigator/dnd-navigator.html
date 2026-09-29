@@ -1,0 +1,109 @@
+<ul class="nav-list" data-drop="root" [class.drop-end]="dropTarget()?.kind === 'root-end'">
+  @for (node of items(); track node.id) {
+    @if (node.kind === 'item') {
+      <li class="nav-slot" [attr.data-root-id]="node.id">
+        <ng-container
+          [ngTemplateOutlet]="itemTile"
+          [ngTemplateOutletContext]="{ $implicit: node, parent: null }"
+        />
+      </li>
+    } @else {
+      <li
+        class="nav-group"
+        data-drop="group"
+        [attr.data-id]="node.id"
+        [attr.data-root-id]="node.id"
+        [class.expanded]="isExpanded(node)"
+        [class.dragging]="draggedId() === node.id"
+        [class]="dropClass(node.id)"
+      >
+        @if (editingGroupId() === node.id) {
+          <div class="tile group-header editing">
+            <mat-icon class="tile-icon">folder_open</mat-icon>
+            <input
+              #renameInput
+              class="rename-input"
+              aria-label="Group name"
+              [value]="node.label"
+              (keydown.enter)="commitRename(node, renameInput.value)"
+              (keydown.escape)="cancelRename()"
+              (blur)="commitRename(node, renameInput.value)"
+            />
+          </div>
+        } @else {
+          <button
+            type="button"
+            class="tile group-header"
+            data-drop="group-header"
+            [attr.data-id]="node.id"
+            [attr.aria-expanded]="isExpanded(node)"
+            [title]="node.label + ' (double-click or F2 to rename)'"
+            (pointerdown)="onPointerDown($event, node)"
+            (click)="toggleGroup(node)"
+            (dblclick)="startRename(node, $event)"
+            (keydown.f2)="startRename(node, $event)"
+            (contextmenu)="dragging() && $event.preventDefault()"
+          >
+            <span class="tile-icon group-icon">
+              <mat-icon>{{ isExpanded(node) ? 'folder_open' : 'folder' }}</mat-icon>
+              <span class="badge">{{ node.children.length }}</span>
+            </span>
+            <span class="tile-label">{{ node.label }}</span>
+          </button>
+        }
+
+        @if (isExpanded(node)) {
+          <ul class="group-children" role="group" [attr.aria-label]="node.label">
+            @for (child of node.children; track child.id) {
+              <li class="nav-slot">
+                <ng-container
+                  [ngTemplateOutlet]="itemTile"
+                  [ngTemplateOutletContext]="{ $implicit: child, parent: node.id }"
+                />
+              </li>
+            }
+          </ul>
+        }
+      </li>
+    }
+  }
+</ul>
+
+<ng-template #itemTile let-item let-parent="parent">
+  <button
+    type="button"
+    class="tile"
+    data-drop="item"
+    [attr.data-id]="item.id"
+    [attr.data-parent]="parent"
+    [attr.aria-current]="activeId() === item.id ? 'page' : null"
+    [class.active]="activeId() === item.id"
+    [class.dragging]="draggedId() === item.id"
+    [class]="dropClass(item.id)"
+    [title]="item.label"
+    (pointerdown)="onPointerDown($event, item)"
+    (click)="onItemClick(item)"
+    (contextmenu)="dragging() && $event.preventDefault()"
+  >
+    <mat-icon class="tile-icon">{{ item.icon }}</mat-icon>
+    <span class="tile-label">{{ item.label }}</span>
+  </button>
+</ng-template>
+
+@if (dragging(); as drag) {
+  <div
+    class="drag-preview"
+    aria-hidden="true"
+    [style.width.px]="drag.width"
+    [style.height.px]="drag.height"
+    [style.transform]="'translate(' + previewPosition().x + 'px, ' + previewPosition().y + 'px)'"
+  >
+    <!-- Shrinks towards the pointer so drop indicators under the preview stay visible. -->
+    <div class="tile" [style.transform-origin]="drag.offsetX + 'px ' + drag.offsetY + 'px'">
+      <mat-icon class="tile-icon">{{
+        drag.node.kind === 'group' ? 'folder' : drag.node.icon
+      }}</mat-icon>
+      <span class="tile-label">{{ drag.node.label }}</span>
+    </div>
+  </div>
+}

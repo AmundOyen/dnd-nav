@@ -1,0 +1,35 @@
+<dnd-navigator
+  class="rail"
+  aria-label="Main"
+  [(items)]="items"
+  [activeId]="activeId()"
+  (itemSelect)="active.set($event)"
+/>
+
+<main class="content">
+  <header class="content-header">
+    <h1>{{ active()?.label ?? 'Drag & drop navigator' }}</h1>
+    <button matButton="tonal" (click)="reset()">
+      <mat-icon>restart_alt</mat-icon>
+      Reset
+    </button>
+  </header>
+
+  <section class="help">
+    <h2>Try it</h2>
+    <ul>
+      <li>Drag an item near the top or bottom edge of another item to reorder.</li>
+      <li>Drop an item on the middle of another item to group them.</li>
+      <li>Hover over a collapsed group while dragging to expand it, then drop inside.</li>
+      <li>Drag items between groups, or out of a group into the root list.</li>
+      <li>A group left with one item is ungrouped automatically.</li>
+      <li>Double-click a group, or press F2 on it, to rename it. Press Escape to cancel a drag.</li>
+      <li>On touch devices, press and hold an item to start dragging.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Emitted tree</h2>
+    <pre>{{ items() | json }}</pre>
+  </section>
+</main>
