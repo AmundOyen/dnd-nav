@@ -1,0 +1,46 @@
+:host {
+  display: flex;
+  height: 100dvh;
+}
+
+.rail {
+  flex: none;
+  background: var(--mat-sys-surface-container);
+  border-right: 1px solid var(--mat-sys-outline-variant);
+}
+
+.content {
+  flex: 1;
+  min-width: 0;
+  overflow: auto;
+  padding: 24px 32px;
+}
+
+.content-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+h1 {
+  margin: 0;
+  font: var(--mat-sys-headline-medium);
+}
+
+h2 {
+  font: var(--mat-sys-title-medium);
+}
+
+.help ul {
+  padding-left: 20px;
+  line-height: 1.6;
+}
+
+pre {
+  padding: 16px;
+  border-radius: 12px;
+  background: var(--mat-sys-surface-container-low);
+  font-size: 12px;
+  overflow: auto;
+}
