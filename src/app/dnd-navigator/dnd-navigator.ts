@@ -14,6 +14,7 @@ import {
 } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
 import { LiveAnnouncer } from '@angular/cdk/a11y';
+import { MatIconButton } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 
 import {
@@ -66,20 +67,24 @@ interface ActiveDrag {
  * - Hover over a collapsed group to expand it, or drop on its header to append to it.
  * - Groups left with a single item are ungrouped automatically.
  *
- * Bind with `[(items)]`; every change emits a new, immutable tree.
+ * Bind with `[(items)]`; every change emits a new, immutable tree. The button at the top switches
+ * between the compact rail and a wide drawer; bind `[(expanded)]` to control or remember that state.
  */
 @Component({
   selector: 'dnd-navigator',
-  imports: [MatIconModule, NgTemplateOutlet],
+  imports: [MatIconButton, MatIconModule, NgTemplateOutlet],
   templateUrl: './dnd-navigator.html',
   styleUrl: './dnd-navigator.scss',
   host: {
     role: 'navigation',
     '[class.is-dragging]': 'dragging() !== null',
+    '[class.drawer]': 'expanded()',
   },
 })
 export class DndNavigator {
   readonly items = model.required<readonly NavNode[]>();
+  /** Whether the navigator is shown as a wide drawer (icon beside label) instead of a rail. */
+  readonly expanded = model(false);
   /** Id of the currently selected item, if any. */
   readonly activeId = input<string | null>(null);
   /** Creates groups when two items are combined. Override to control ids and default labels. */
@@ -87,7 +92,7 @@ export class DndNavigator {
 
   readonly itemSelect = output<NavItem>();
 
-  protected readonly expanded = signal<ReadonlySet<string>>(new Set());
+  protected readonly openGroups = signal<ReadonlySet<string>>(new Set());
   protected readonly dragging = signal<ActiveDrag | null>(null);
   protected readonly dropTarget = signal<DropTarget | null>(null);
   protected readonly previewPosition = signal({ x: 0, y: 0 });
@@ -123,8 +128,8 @@ export class DndNavigator {
     });
   }
 
-  protected isExpanded(group: NavGroup): boolean {
-    return this.expanded().has(group.id);
+  protected isGroupOpen(group: NavGroup): boolean {
+    return this.openGroups().has(group.id);
   }
 
   protected dropClass(id: string): string | null {
@@ -153,7 +158,11 @@ export class DndNavigator {
     if (this.clickSuppressed()) {
       return;
     }
-    this.setExpanded(group.id, !this.isExpanded(group));
+    this.setGroupOpen(group.id, !this.isGroupOpen(group));
+  }
+
+  protected toggleExpanded(): void {
+    this.expanded.update((expanded) => !expanded);
   }
 
   protected startRename(group: NavGroup, event?: Event): void {
@@ -289,20 +298,20 @@ export class DndNavigator {
       }
     }
 
-    const expanded = new Set(this.expanded());
+    const open = new Set(this.openGroups());
     for (const id of this.autoExpanded) {
       if (!keepOpen.has(id)) {
-        expanded.delete(id);
+        open.delete(id);
       }
     }
-    keepOpen.forEach((id) => expanded.add(id));
+    keepOpen.forEach((id) => open.add(id));
     // Forget groups that were dissolved by this move.
-    for (const id of expanded) {
+    for (const id of open) {
       if (findNode(after, id)?.node.kind !== 'group') {
-        expanded.delete(id);
+        open.delete(id);
       }
     }
-    this.expanded.set(expanded);
+    this.openGroups.set(open);
     this.autoExpanded = new Set();
 
     if (after !== before) {
@@ -318,9 +327,9 @@ export class DndNavigator {
     }
     if (this.autoExpanded.size) {
       // Cancelled drags (Escape, pointercancel) close any sprung-open groups.
-      const expanded = new Set(this.expanded());
-      this.autoExpanded.forEach((id) => expanded.delete(id));
-      this.expanded.set(expanded);
+      const open = new Set(this.openGroups());
+      this.autoExpanded.forEach((id) => open.delete(id));
+      this.openGroups.set(open);
       this.autoExpanded = new Set();
     }
     this.clearHoverTimer();
@@ -341,11 +350,11 @@ export class DndNavigator {
       return;
     }
     this.clearHoverTimer();
-    if (groupId && !this.expanded().has(groupId)) {
+    if (groupId && !this.openGroups().has(groupId)) {
       this.hoverGroupId = groupId;
       this.hoverTimer = setTimeout(() => {
         this.autoExpanded.add(groupId);
-        this.setExpanded(groupId, true);
+        this.setGroupOpen(groupId, true);
       }, HOVER_EXPAND_DELAY);
     }
   }
@@ -396,11 +405,11 @@ export class DndNavigator {
             ? { kind: 'after', refId: id }
             : { kind: 'combine', refId: id };
     } else if (kind === 'group-header') {
-      const expanded = this.expanded().has(id);
+      const open = this.openGroups().has(id);
       target =
         ratio < EDGE_ZONE
           ? { kind: 'before', refId: id }
-          : ratio > 1 - EDGE_ZONE && !expanded
+          : ratio > 1 - EDGE_ZONE && !open
             ? { kind: 'after', refId: id }
             : { kind: 'into', groupId: id };
     } else if (kind === 'group') {
@@ -427,14 +436,14 @@ export class DndNavigator {
     }
   }
 
-  private setExpanded(groupId: string, open: boolean): void {
-    const next = new Set(this.expanded());
+  private setGroupOpen(groupId: string, open: boolean): void {
+    const next = new Set(this.openGroups());
     if (open) {
       next.add(groupId);
     } else {
       next.delete(groupId);
     }
-    this.expanded.set(next);
+    this.openGroups.set(next);
   }
 
   private clickSuppressed(): boolean {

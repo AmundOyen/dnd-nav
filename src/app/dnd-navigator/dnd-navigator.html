@@ -1,3 +1,17 @@
+<div class="nav-header">
+  <button
+    matIconButton
+    type="button"
+    class="nav-toggle"
+    [attr.aria-expanded]="expanded()"
+    [attr.aria-label]="expanded() ? 'Minimize navigation' : 'Expand navigation'"
+    [title]="expanded() ? 'Minimize navigation' : 'Expand navigation'"
+    (click)="toggleExpanded()"
+  >
+    <mat-icon>{{ expanded() ? 'menu_open' : 'menu' }}</mat-icon>
+  </button>
+</div>
+
 <ul class="nav-list" data-drop="root" [class.drop-end]="dropTarget()?.kind === 'root-end'">
   @for (node of items(); track node.id) {
     @if (node.kind === 'item') {
@@ -13,7 +27,7 @@
         data-drop="group"
         [attr.data-id]="node.id"
         [attr.data-root-id]="node.id"
-        [class.expanded]="isExpanded(node)"
+        [class.expanded]="isGroupOpen(node)"
         [class.dragging]="draggedId() === node.id"
         [class]="dropClass(node.id)"
       >
@@ -36,7 +50,7 @@
             class="tile group-header"
             data-drop="group-header"
             [attr.data-id]="node.id"
-            [attr.aria-expanded]="isExpanded(node)"
+            [attr.aria-expanded]="isGroupOpen(node)"
             [title]="node.label + ' (double-click or F2 to rename)'"
             (pointerdown)="onPointerDown($event, node)"
             (click)="toggleGroup(node)"
@@ -45,14 +59,17 @@
             (contextmenu)="dragging() && $event.preventDefault()"
           >
             <span class="tile-icon group-icon">
-              <mat-icon>{{ isExpanded(node) ? 'folder_open' : 'folder' }}</mat-icon>
+              <mat-icon>{{ isGroupOpen(node) ? 'folder_open' : 'folder' }}</mat-icon>
               <span class="badge">{{ node.children.length }}</span>
             </span>
             <span class="tile-label">{{ node.label }}</span>
+            <mat-icon class="chevron" aria-hidden="true">{{
+              isGroupOpen(node) ? 'expand_less' : 'expand_more'
+            }}</mat-icon>
           </button>
         }
 
-        @if (isExpanded(node)) {
+        @if (isGroupOpen(node)) {
           <ul class="group-children" role="group" [attr.aria-label]="node.label">
             @for (child of node.children; track child.id) {
               <li class="nav-slot">

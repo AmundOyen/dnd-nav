@@ -14,6 +14,8 @@ Each item shows its icon above its label.
 - **Rename a group**: double-click it or press F2. Enter saves, Escape cancels.
 - **Cancel a drag**: press Escape.
 - **Touch**: press and hold an item for 300 ms to start dragging. A quick swipe still scrolls the rail.
+- **Expand / minimize**: the menu button at the top switches between the compact rail (icon above label)
+  and a wide drawer (icon beside label). Drag and drop works the same in both.
 
 ## Usage
 
@@ -26,6 +28,7 @@ import { DndNavigator, NavNode } from './dnd-navigator';
     <dnd-navigator
       aria-label="Main"
       [(items)]="items"
+      [(expanded)]="expanded"
       [activeId]="activeId()"
       (itemSelect)="activeId.set($event.id)"
     />
@@ -45,19 +48,21 @@ export class Shell {
     },
   ]);
   readonly activeId = signal<string | null>('home');
+  readonly expanded = signal(false);
 }
 ```
 
 | API            | Type                             | Description                                                   |
 | -------------- | -------------------------------- | ------------------------------------------------------------- |
 | `items`        | `model<readonly NavNode[]>`      | The tree. Every change emits a new, immutable tree via `itemsChange`. |
+| `expanded`     | `model<boolean>`                 | `true` shows the wide drawer, `false` the rail. Toggled by the built-in menu button. |
 | `activeId`     | `input<string \| null>`          | Highlights the selected item.                                 |
 | `groupFactory` | `input<GroupFactory>`            | Creates a group when two items are combined (id and default label). |
 | `itemSelect`   | `output<NavItem>`                | Emitted when an item is clicked (not after a drag).           |
 
 Icons are Material icon ligatures (`<mat-icon>`), and colours come from the Material 3 system tokens
-(`--mat-sys-*`), so the rail follows your `mat.theme`. The rail width can be changed with
-`--dnd-nav-width`.
+(`--mat-sys-*`), so the rail follows your `mat.theme`. The widths can be changed with
+`--dnd-nav-width` (rail, default `88px`) and `--dnd-nav-drawer-width` (drawer, default `240px`).
 
 The tree operations (`moveNode`, `canDrop`, `normalize`, `renameGroup`) are pure functions in
 `nav-tree.ts`, so they can be used on their own, for example in a store or on the server.

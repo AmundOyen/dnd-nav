@@ -6,7 +6,11 @@ import { NavItem, NavNode } from './nav-tree';
 
 @Component({
   imports: [DndNavigator],
-  template: `<dnd-navigator [(items)]="items" (itemSelect)="selected.set($event)" />`,
+  template: `<dnd-navigator
+    [(items)]="items"
+    [(expanded)]="expanded"
+    (itemSelect)="selected.set($event)"
+  />`,
 })
 class Host {
   readonly items = signal<readonly NavNode[]>([
@@ -22,6 +26,7 @@ class Host {
     },
   ]);
   readonly selected = signal<NavItem | null>(null);
+  readonly expanded = signal(false);
 }
 
 describe('DndNavigator', () => {
@@ -40,6 +45,31 @@ describe('DndNavigator', () => {
     const tile = query('[data-id="home"]');
     expect(tile.children[0].textContent?.trim()).toBe('home');
     expect(tile.children[1].textContent?.trim()).toBe('Home');
+  });
+
+  it('expands to a drawer and minimizes back with the toggle button', async () => {
+    const navigator = query('dnd-navigator');
+    const toggle = () => query('.nav-toggle');
+    expect(navigator.classList).not.toContain('drawer');
+    expect(toggle().getAttribute('aria-expanded')).toBe('false');
+
+    toggle().click();
+    await fixture.whenStable();
+    expect(fixture.componentInstance.expanded()).toBe(true);
+    expect(navigator.classList).toContain('drawer');
+    expect(toggle().getAttribute('aria-label')).toBe('Minimize navigation');
+
+    toggle().click();
+    await fixture.whenStable();
+    expect(fixture.componentInstance.expanded()).toBe(false);
+    expect(navigator.classList).not.toContain('drawer');
+  });
+
+  it('follows the expanded state set by the host', async () => {
+    fixture.componentInstance.expanded.set(true);
+    await fixture.whenStable();
+    expect(query('dnd-navigator').classList).toContain('drawer');
+    expect(query('.nav-toggle').getAttribute('aria-expanded')).toBe('true');
   });
 
   it('emits itemSelect on click', () => {
